@@ -3,44 +3,18 @@ import { z } from "zod";
 /**
  * Validação centralizada das variáveis de ambiente.
  *
- * Importe `env` apenas em módulos server (auth, prisma, actions, route
- * handlers). No client, use `process.env.NEXT_PUBLIC_*` diretamente — o
- * Next.js inlina essas no bundle.
+ * Importe `env` apenas em módulos server. No client, use
+ * `process.env.NEXT_PUBLIC_*` diretamente — o Next.js inlina essas no bundle.
  *
- * Para pular a validação (ex.: build de CI sem segredos):
+ * Para pular a validação (ex.: build de CI sem variáveis):
  *   SKIP_ENV_VALIDATION=1 pnpm build
  */
 const envSchema = z.object({
-  // Banco de dados
-  DATABASE_URL: z.url(),
-  DIRECT_URL: z.url().optional(),
-  // Driver do Prisma: "neon" (Neon, padrão) ou "pg" (Postgres local/Docker).
-  DATABASE_DRIVER: z.enum(["neon", "pg"]).default("neon"),
-
-  // Better Auth
-  BETTER_AUTH_SECRET: z
-    .string()
-    .min(
-      32,
-      "use pelo menos 32 caracteres — gere com: openssl rand -base64 32",
-    ),
+  // URL pública do app (metadata, manifest e CSP).
   NEXT_PUBLIC_BASE_URL: z.url(),
 
   // Nível mínimo dos logs (lib/logger.ts). Sem ele: info em produção, debug em dev.
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error", "silent"]).optional(),
-
-  // RBAC — e-mails (separados por vírgula) que viram admin ao criar a conta.
-  ADMIN_EMAILS: z.string().optional(),
-
-  // OAuth — opt-in por provedor (ver lib/auth/auth.ts)
-  GOOGLE_CLIENT_ID: z.string().optional(),
-  GOOGLE_CLIENT_SECRET: z.string().optional(),
-  GITHUB_CLIENT_ID: z.string().optional(),
-  GITHUB_CLIENT_SECRET: z.string().optional(),
-
-  // E-mail — sem RESEND_API_KEY o envio cai no transporte "console" (dev).
-  RESEND_API_KEY: z.string().optional(),
-  EMAIL_FROM: z.string().default("Meu Template <onboarding@resend.dev>"),
 
   NODE_ENV: z
     .enum(["development", "test", "production"])
@@ -63,7 +37,7 @@ function parseEnv(): z.infer<typeof envSchema> {
 
     throw new Error(
       `Variáveis de ambiente inválidas:\n${issues}\n\n` +
-        "Rode `pnpm bootstrap` (cria o .env e o banco) ou copie .env.example para .env.",
+        "Copie .env.example para .env e preencha os valores.",
     );
   }
 

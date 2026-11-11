@@ -16,8 +16,8 @@ push e o merge.
 Ao lado do código, com sufixo `.test.ts`:
 
 ```txt
-features/example/services/note.service.ts
-features/example/services/note.service.test.ts
+features/library/services/library.service.ts
+features/library/services/library.service.test.ts
 ```
 
 O `vitest.config.mts` só inclui `**/*.test.ts` — um `.test.tsx` **não roda**.
@@ -30,13 +30,12 @@ O `vitest.config.mts` só inclui `**/*.test.ts` — um `.test.tsx` **não roda**
 
 ## O que testar e como
 
-| O que                    | Como                                                          | Exemplo                                          |
-| ------------------------ | ------------------------------------------------------------- | ------------------------------------------------ |
-| Schema Zod               | `safeParse` com entradas válidas e inválidas                  | `features/example/schemas/note.schema.test.ts`   |
-| Service com repository   | `vi.mock` do repository; checar DTO e `NotFoundError`         | `features/example/services/note.service.test.ts` |
-| Service sobre `auth.api` | `vi.mock("@/lib/auth/auth")` e `vi.mock("next/headers")`      | `features/admin/services/admin.service.test.ts`  |
-| `createAction`           | mock de `@/lib/auth/session`, `next/cache`, `next/navigation` | `lib/actions/create-action.test.ts`              |
-| Funções puras            | chamada direta                                                | `lib/auth/roles.test.ts`, `nav.config.test.ts`   |
+| O que                  | Como                                                | Exemplo                             |
+| ---------------------- | --------------------------------------------------- | ----------------------------------- |
+| Schema Zod             | `safeParse` com entradas válidas e inválidas        | `features/*/schemas/*.test.ts`      |
+| Lógica pura (fila etc) | chamada direta, sem mocks                           | `nav.config.test.ts`                |
+| Service com repository | `vi.mock` do repository; checar o DTO devolvido     | `features/*/services/*.test.ts`     |
+| Repository (Dexie)     | `fake-indexeddb` (dev dependency, entra na Etapa 2) | `features/*/repositories/*.test.ts` |
 
 ### Padrão de mock
 
@@ -44,17 +43,17 @@ Declare o `vi.mock` antes e importe o módulo testado **depois**, com `await imp
 (os mocks são hoisted, mas o import dinâmico deixa a ordem explícita):
 
 ```ts
-vi.mock("../repositories/note.repository", () => ({
-  noteRepository: { listByUser: vi.fn() /* ... */ },
+vi.mock("../repositories/song.repository", () => ({
+  songRepository: { list: vi.fn() /* ... */ },
 }));
 
-const { noteRepository } = await import("../repositories/note.repository");
-const { noteService } = await import("./note.service");
+const { songRepository } = await import("../repositories/song.repository");
+const { libraryService } = await import("./library.service");
 ```
 
 Chame `vi.clearAllMocks()` num `beforeEach`.
 
 ## O que ainda não existe
 
-Testes de integração (com banco real) estão no roadmap — ver
-[roadmap.md](roadmap.md).
+Testes de componente e e2e (o motor de áudio e a tela bloqueada serão
+validados em aparelho real). Ver [roadmap.md](roadmap.md).

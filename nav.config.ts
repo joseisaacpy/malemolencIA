@@ -1,31 +1,22 @@
 import type { LucideIcon } from "lucide-react";
-import {
-  HomeIcon,
-  LayoutDashboardIcon,
-  NotebookIcon,
-  ShieldIcon,
-} from "lucide-react";
-
-import type { Role } from "@/lib/auth/roles";
+import { MusicIcon } from "lucide-react";
 
 /**
- * Configuração central de navegação e identidade do site.
+ * Configuração central de navegação e identidade do app.
  *
  * Fonte única de verdade para:
  * - nome / descrição / URL do site (consumidos em `lib/metadata.ts`);
- * - registro de rotas: cada página tem uma chave, um caminho e um "nome";
- * - itens exibidos no header / footer.
+ * - registro de rotas: cada página tem uma chave, um caminho e um "nome".
  *
- * Ao criar uma rota nova, siga o passo a passo em `docs/routing.md`.
+ * Ao criar uma rota nova, registre-a aqui e use `createMetadata({ route })`.
  */
 
 export const site = {
-  name: "Meu Template",
+  name: "MalemolencIA",
   /** Nome curto p/ PWA (`short_name`) e telas pequenas. Máx. ~12 chars. */
-  shortName: "Template",
+  shortName: "MalemolencIA",
   /** Sufixo do `<title>` e fallback de `description`. */
-  description:
-    "Template Next.js fullstack com autenticação, banco e UI prontos.",
+  description: "Player de músicas locais, minimalista e sem anúncios.",
   /** URL pública, sem barra no final. */
   url: (process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000").replace(
     /\/$/,
@@ -35,45 +26,19 @@ export const site = {
   /**
    * Cor da barra do navegador e da splash PWA
    * (`<meta name="theme-color">` via `app/layout.tsx` + `theme_color` no manifest).
-   * Ajuste para a cor da sua marca. Formato hex.
+   * O app é escuro fixo. Formato hex.
    */
-  themeColor: { light: "#ffffff", dark: "#0a0a0a" },
+  themeColor: "#0a0a0a",
   /** Fundo da splash screen PWA (`background_color` no manifest). */
-  backgroundColor: "#ffffff",
+  backgroundColor: "#0a0a0a",
   /**
    * Imagem OG padrão em `/public` (ex.: `"/og.png"`).
    * Deixe `undefined` enquanto não houver arquivo — evita link quebrado.
    */
   ogImage: undefined as string | undefined,
-  /** URL do repositório — usada na home e nos comandos de instalação. */
-  repoUrl: "https://github.com/joseisaacpy/my-template-next-app",
-  /**
-   * Autor exibido na home (`app/(public)/_components/home-view.tsx`).
-   * Troque pelos seus dados. Se mudar o host do `avatar`, ajuste
-   * `images.remotePatterns` em `next.config.ts`.
-   */
-  author: {
-    name: "José Isaac",
-    handle: "joseisaacpy",
-    url: "https://github.com/joseisaacpy",
-    avatar: "https://avatars.githubusercontent.com/u/145298381?v=4",
-    portfolio: "https://joseisaacdev.vercel.app",
-  },
 } as const;
 
-/** Frequência de mudança declarada no `sitemap.xml`. */
-export type ChangeFrequency =
-  "always" | "hourly" | "daily" | "weekly" | "monthly" | "yearly" | "never";
-
-export type RouteKey =
-  | "home"
-  | "login"
-  | "register"
-  | "forgotPassword"
-  | "resetPassword"
-  | "dashboard"
-  | "notes"
-  | "admin";
+export type RouteKey = "library";
 
 export interface RouteMeta {
   /** Caminho real da rota. */
@@ -82,140 +47,16 @@ export interface RouteMeta {
   label: string;
   /** Descrição da página: vira `<meta name="description">` quando a page não define outra. */
   description: string;
-  /** `true` quando a rota exige sessão. */
-  auth?: boolean;
-  /**
-   * Papéis que veem a rota no menu. Omitido = qualquer um. Só esconde o link:
-   * a proteção real é `requireRole()` na page (ver `lib/auth/session.ts`).
-   */
-  roles?: Role[];
-  /** Ícone opcional para uso no menu / sidebar. */
+  /** Ícone opcional para uso na navegação. */
   icon?: LucideIcon;
-  /**
-   * Controle da rota no `sitemap.xml`:
-   * - omitido: entra com defaults (`priority` 1 na home, 0.7 nas demais, `monthly`);
-   * - `false`: fica de fora;
-   * - objeto: entra com `changeFrequency` / `priority` customizados.
-   *
-   * Rotas com `auth: true` nunca entram no sitemap.
-   */
-  sitemap?: false | { changeFrequency?: ChangeFrequency; priority?: number };
 }
 
 /** Registro de todas as rotas de página do app. */
 export const routes: Record<RouteKey, RouteMeta> = {
-  home: {
+  library: {
     path: "/",
-    label: "Início",
+    label: "Músicas",
     description: site.description,
-    icon: HomeIcon,
-  },
-  login: {
-    path: "/login",
-    label: "Entrar",
-    description: "Acesse sua conta para continuar.",
-  },
-  register: {
-    path: "/register",
-    label: "Criar conta",
-    description: "Crie sua conta em menos de um minuto.",
-  },
-  forgotPassword: {
-    path: "/forgot-password",
-    label: "Recuperar senha",
-    description: "Enviaremos um link para redefinir sua senha.",
-    // Página de fluxo, sem valor de busca — fora do sitemap.
-    sitemap: false,
-  },
-  resetPassword: {
-    path: "/reset-password",
-    label: "Redefinir senha",
-    description: "Escolha uma nova senha para sua conta.",
-    // Acessada só via link com token — fora do sitemap.
-    sitemap: false,
-  },
-  dashboard: {
-    path: "/dashboard",
-    label: "Dashboard",
-    description: "Painel da sua conta.",
-    auth: true,
-    icon: LayoutDashboardIcon,
-  },
-  notes: {
-    path: "/notes",
-    label: "Notas",
-    description: "Suas notas — CRUD de referência do template.",
-    auth: true,
-    icon: NotebookIcon,
-  },
-  admin: {
-    path: "/admin/users",
-    label: "Admin",
-    description: "Gerencie os usuários e seus papéis.",
-    auth: true,
-    roles: ["admin"],
-    icon: ShieldIcon,
+    icon: MusicIcon,
   },
 };
-
-export interface NavLinkItem extends RouteMeta {
-  key: RouteKey;
-  /** Abre em nova aba (links externos). */
-  external?: boolean;
-}
-
-/** Resolve chaves de rota em itens completos, preservando a ordem. */
-function items(keys: RouteKey[]): NavLinkItem[] {
-  return keys.map((key) => ({ key, ...routes[key] }));
-}
-
-/**
- * Itens de navegação por área. Edite as listas para mudar o menu.
- * Itens com `auth: true` só aparecem quando `authenticated` é passado ao `<Header />`.
- */
-export const nav = {
-  header: items(["home", "dashboard", "notes", "admin"]),
-  footer: items([]),
-} as const;
-
-/**
- * Rotas que entram no `sitemap.xml`: as públicas (`auth` != true) não marcadas
- * com `sitemap: false`. Consumido por `app/sitemap.ts` — edite `routes`, não o
- * arquivo de sitemap.
- */
-export function sitemapRoutes(): Array<{
-  key: RouteKey;
-  path: string;
-  label: string;
-  changeFrequency: ChangeFrequency;
-  priority: number;
-}> {
-  return (Object.keys(routes) as RouteKey[])
-    .map((key) => ({ key, ...routes[key] }))
-    .filter((route) => !route.auth && route.sitemap !== false)
-    .map((route) => {
-      const cfg = typeof route.sitemap === "object" ? route.sitemap : undefined;
-      return {
-        key: route.key,
-        path: route.path,
-        label: route.label,
-        changeFrequency: cfg?.changeFrequency ?? "monthly",
-        priority: cfg?.priority ?? (route.path === "/" ? 1 : 0.7),
-      };
-    });
-}
-
-/**
- * Prefixos de caminho que exigem sessão — o 1º segmento de cada rota
- * `auth: true` (`/admin/users` → `/admin`), sem repetir. Consumido por
- * `app/robots.ts` para montar as regras `Disallow`.
- * (O `proxy.ts` mantém a própria lista para não inflar o bundle do middleware;
- * as duas devem listar os mesmos prefixos.)
- */
-export function privatePathPrefixes(): string[] {
-  const prefixes = (Object.keys(routes) as RouteKey[])
-    .filter((key) => routes[key].auth)
-    .map((key) => `/${routes[key].path.split("/")[1]}`);
-
-  return [...new Set(prefixes)];
-}

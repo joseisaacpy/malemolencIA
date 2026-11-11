@@ -22,12 +22,10 @@ const display = Bricolage_Grotesque({
 export const metadata = rootMetadata;
 
 // `<meta name="theme-color">` — cor da barra do navegador (mobile) e PWA.
-// Valores em `site.themeColor` (nav.config.ts).
+// O app é escuro fixo; o valor vem de `site.themeColor` (nav.config.ts).
 export const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: site.themeColor.light },
-    { media: "(prefers-color-scheme: dark)", color: site.themeColor.dark },
-  ],
+  themeColor: site.themeColor,
+  colorScheme: "dark",
 };
 
 export default function RootLayout({
@@ -36,10 +34,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
+    // `dark` fixo: os tokens escuros de `globals.css` valem para o app todo.
     <html
       lang="pt-BR"
-      suppressHydrationWarning
-      className={cn("font-sans", inter.variable, display.variable)}
+      className={cn("dark font-sans", inter.variable, display.variable)}
     >
       <body>
         <Providers>{children}</Providers>

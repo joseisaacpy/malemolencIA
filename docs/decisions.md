@@ -11,7 +11,7 @@ como "Substituída") — não apague o histórico.
 
 ## 1. Better Auth para autenticação
 
-- **Status:** aceita
+- **Status:** substituída pela decisão 17
 - **Contexto:** o template precisa de login por e-mail/senha e social, com
   App Router e Prisma.
 - **Decisão:** Better Auth, com o adapter Prisma (`lib/auth/auth.ts`).
@@ -22,7 +22,7 @@ como "Substituída") — não apague o histórico.
 
 ## 2. Prisma + PostgreSQL (Neon)
 
-- **Status:** aceita
+- **Status:** substituída pela decisão 17
 - **Contexto:** tipagem forte e produtividade; o deploy alvo é serverless.
 - **Decisão:** Prisma 7 com o adapter Neon (`@prisma/adapter-neon`) e cliente
   único em `lib/db/prisma.ts`. Migrações usam `DIRECT_URL` quando existe
@@ -42,7 +42,7 @@ como "Substituída") — não apague o histórico.
 
 ## 4. Camadas por feature e autorização por dono (404, não 403)
 
-- **Status:** aceita
+- **Status:** substituída pela decisão 17
 - **Contexto:** o template precisa de um padrão que um júnior consiga copiar sem
   abrir brecha de acesso a dados de outro usuário.
 - **Decisão:** `component → action → service → repository → Prisma`. Só o
@@ -54,7 +54,7 @@ como "Substituída") — não apague o histórico.
 
 ## 5. Server actions devolvem `ActionResult`
 
-- **Status:** aceita
+- **Status:** substituída pela decisão 17
 - **Contexto:** no React 19, erro de validação é um valor de retorno consumido
   por `useActionState`, não uma exceção.
 - **Decisão:** toda action retorna `{ ok: true, data }` ou
@@ -66,7 +66,7 @@ como "Substituída") — não apague o histórico.
 
 ## 6. `proxy.ts` otimista; validação real na page/action
 
-- **Status:** aceita
+- **Status:** substituída pela decisão 17
 - **Contexto:** o Proxy roda antes do cache e não serve para I/O lento; layouts
   podem não re-renderizar em navegações parciais.
 - **Decisão:** `proxy.ts` só verifica a presença do cookie de sessão. A
@@ -79,7 +79,7 @@ como "Substituída") — não apague o histórico.
 
 ## 7. Rate limit persistido em banco
 
-- **Status:** aceita
+- **Status:** substituída pela decisão 17
 - **Contexto:** memória não serve em serverless (cada invocação é um processo
   novo).
 - **Decisão:** `rateLimit.storage = "database"`, 100 req/min, na tabela
@@ -89,7 +89,7 @@ como "Substituída") — não apague o histórico.
 
 ## 8. RBAC com o plugin `admin` do Better Auth
 
-- **Status:** aceita
+- **Status:** substituída pela decisão 17
 - **Contexto:** precisamos de áreas restritas sem reinventar ban e troca de
   papel.
 - **Decisão:** plugin `admin()` com os papéis padrão `user` e `admin`. Checagem
@@ -128,7 +128,7 @@ como "Substituída") — não apague o histórico.
 
 ## 11. E-mail com transporte `console` como fallback
 
-- **Status:** aceita
+- **Status:** substituída pela decisão 17
 - **Contexto:** o template deve rodar sem conta no Resend.
 - **Decisão:** `lib/email` com `sendEmail` + `EmailTransport`. Sem
   `RESEND_API_KEY`, o e-mail é impresso no terminal; com a chave, vai pelo Resend.
@@ -139,7 +139,7 @@ como "Substituída") — não apague o histórico.
 
 ## 12. Dois drivers de banco, escolhidos por `DATABASE_DRIVER`
 
-- **Status:** aceita
+- **Status:** substituída pela decisão 17
 - **Contexto:** o adapter do Neon fala com o banco por WebSocket e não conecta
   num Postgres comum, então o template só rodava com conta no Neon.
 - **Decisão:** `lib/db/adapter.ts` cria `PrismaNeon` ou `PrismaPg` conforme
@@ -152,7 +152,7 @@ como "Substituída") — não apague o histórico.
 
 ## 13. Imagem standalone com migração em serviço separado
 
-- **Status:** aceita
+- **Status:** substituída pela decisão 17
 - **Contexto:** a imagem de produção deve ser enxuta, e `prisma migrate deploy`
   precisa do CLI do Prisma, que é dependência de desenvolvimento.
 - **Decisão:** `Dockerfile` multi-stage. O _target_ `migrate` (com todas as
@@ -184,7 +184,7 @@ como "Substituída") — não apague o histórico.
 
 ## 15. Bootstrap sem dependências e seed de demonstração com guardas
 
-- **Status:** aceita
+- **Status:** substituída pela decisão 17
 - **Contexto:** do clone ao primeiro login eram ~7 passos manuais; o seed estava
   quebrado e o cadastro exige verificar e-mail, que só aparece no terminal.
 - **Decisão:** `pnpm bootstrap` (`scripts/setup.ts`, só `node:*`) cria o `.env`,
@@ -200,7 +200,7 @@ como "Substituída") — não apague o histórico.
 
 ## 16. Poda do template por tipo de projeto (full / front / back)
 
-- **Status:** aceita
+- **Status:** substituída pela decisão 17
 - **Contexto:** o template traz interface, auth, banco, e-mail e Docker, mas
   muitos projetos são só front (sem banco) ou só API (sem telas). Apagar à mão
   é lento e deixa dependências e arquivos órfãos.
@@ -217,3 +217,20 @@ como "Substituída") — não apague o histórico.
   `git restore . && git clean -fd` desfazer. Os overlays do `back` ficam fora do
   `tsconfig` e do Vitest do template completo, porque importam arquivos que só
   existem depois da poda; os overlays do `front` compilam em ambos.
+
+## 17. MalemolencIA é local-first, sem backend, auth nem banco
+
+- **Status:** aceita
+- **Contexto:** o template era um SaaS full-stack (Better Auth, Prisma/Postgres,
+  e-mail, Docker). O MalemolencIA é um player de músicas locais, pessoal, sem
+  usuários nem servidor.
+- **Decisão:** remover auth, Prisma, e-mail, Docker, `proxy.ts`, server actions
+  e as telas de exemplo. Dados no IndexedDB (Dexie), estado com Zustand, tema
+  escuro fixo, service worker manual em `public/sw.js`. Fluxo das features:
+  `component → hook/store → service → repository (Dexie)`, tudo no cliente.
+- **Alternativas:** manter auth e banco dormentes (descartada: o `env.ts`
+  exigiria banco e segredo, e haveria dependências e código sem uso).
+- **Consequências:** as decisões 1, 2, 4, 5, 6, 7, 8, 11, 12, 13, 15 e 16 ficam
+  como histórico. A regra "Server Components por padrão" vale só para as
+  `page.tsx` (wrappers finos); a lógica das features roda no cliente. O código
+  removido continua no histórico do git.

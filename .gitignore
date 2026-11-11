@@ -42,7 +42,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-/lib/generated/prisma
 
 # react-email preview build
 .react-email/

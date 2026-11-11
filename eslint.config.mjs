@@ -7,16 +7,10 @@ const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
   // No servidor use `logger` (lib/logger.ts), não `console`. Exceções: o próprio
-  // logger, o seed e `scripts/` (scripts de CLI) e os arquivos que usam `console` de propósito.
+  // logger, e os arquivos que usam `console` de propósito.
   { rules: { "no-console": "error" } },
   {
-    files: [
-      "lib/logger.ts",
-      "lib/email/transports/console.ts",
-      "lib/observability/capture-error.ts",
-      "prisma/seed.ts",
-      "scripts/**",
-    ],
+    files: ["lib/logger.ts", "lib/observability/capture-error.ts"],
     rules: { "no-console": "off" },
   },
   // Desliga regras de estilo que o Prettier já cuida. Sempre por último.
@@ -28,8 +22,6 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
-    // Client Prisma gerado — código de build, não fonte.
-    "lib/generated/**",
   ]),
 ]);
 

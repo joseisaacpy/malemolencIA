@@ -5,7 +5,7 @@ import { styleText } from "node:util";
 /**
  * Logger do servidor, sem dependências.
  *
- * - **Produção:** uma linha JSON por log (a Vercel e o `docker logs` leem isso
+ * - **Produção:** uma linha JSON por log (a Vercel lê isso
  *   direto, e dá para filtrar por campo).
  * - **Desenvolvimento:** linha colorida e legível, com a stack do erro embaixo.
  *

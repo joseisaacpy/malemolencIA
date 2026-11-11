@@ -33,7 +33,7 @@ interface CreateMetadataInput {
  * export const metadata = createMetadata({ title: "Post X", path: "/blog/post-x" });
  * ```
  *
- * O sufixo do `<title>` (`%s · Meu Template`) vem do template definido
+ * O sufixo do `<title>` (`%s · MalemolencIA`) vem do template definido
  * em `app/layout.tsx` via `rootMetadata`.
  */
 export function createMetadata({

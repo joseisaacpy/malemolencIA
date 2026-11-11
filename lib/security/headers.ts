@@ -27,7 +27,7 @@ export function buildCsp(isDev: boolean, https: boolean): string {
     "frame-ancestors 'none'",
   ];
 
-  // Só com HTTPS: em `http://localhost` (ex.: Docker) essa diretiva faz o
+  // Só com HTTPS: em `http://localhost` essa diretiva faz o
   // Safari tentar carregar os assets por https e a página quebra.
   if (https) directives.push("upgrade-insecure-requests");
 

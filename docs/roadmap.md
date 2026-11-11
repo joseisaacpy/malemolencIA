@@ -1,58 +1,26 @@
 # Roadmap
 
-## Feito (T0 + T1 — destravar + arquitetura)
+| #   | Etapa                               | Status   |
+| --- | ----------------------------------- | -------- |
+| 0   | Limpeza do template + rebrand       | feito    |
+| 1   | Teste de viabilidade no aparelho    | pendente |
+| 2   | Fundação (deps, Dexie, shell)       | pendente |
+| 3   | Importação de músicas e metadados   | pendente |
+| 4   | Biblioteca (lista, busca, artistas) | pendente |
+| 5   | Player (motor, fila, Media Session) | pendente |
+| 6   | Playlists, favoritos e histórico    | pendente |
+| 7   | PWA (service worker, offline)       | pendente |
+| 8   | Robustez e validação em aparelho    | pendente |
 
-- schema Prisma + migração inicial + cliente único
-- camada de e-mail (Resend + fallback console)
-- verificação de e-mail, reset de senha, logout, sessão no servidor
-- rate limit persistido, login social opt-in
-- camada de server actions tipada (`lib/actions` + `lib/errors`)
-- CRUD de referência (Notas) em `features/example`
+## Etapa 1 — teste de viabilidade
 
-## Feito (T2 — higiene)
+Página descartável que valida no Android: escolher pasta, guardar o handle,
+reabrir o app, pedir permissão, tocar e manter a reprodução com a tela
+bloqueada. O resultado decide entre guardar só a referência ao arquivo (handle)
+ou copiar o áudio para o IndexedDB.
 
-- `LICENSE` MIT, `packageManager`, `engines`, `.nvmrc`, `.editorconfig`
-- Prettier + `prettier-plugin-tailwindcss` + `eslint-config-prettier`
-- git hooks (lefthook) + commitlint (Conventional Commits)
-- Vitest — schemas, `toActionError`, `sitemapRoutes`, `noteService`
-- CI (GitHub Actions: format → typecheck → lint → test → build)
-- security headers (hoje em `lib/security/headers.ts`) + `app/opengraph-image.tsx`
-- `lib/observability/captureError()` nos error boundaries
-- `home-view.tsx` sem dados pessoais hardcoded (`site.author` / `site.repoUrl`)
-- `ThemeButton` com `useSyncExternalStore` (`useMounted`)
+## Pendências futuras
 
-## Feito (P0 — prioridade alta)
-
-- `Content-Security-Policy` estática (`lib/security/headers.ts`)
-- RBAC: plugin `admin` (user/admin), `requireRole`, `createAction({ roles })`, `/admin/users`
-- docs de arquitetura: índice, fluxo de request, how-to de feature, testes, ADRs
-- `robots.txt` bloqueia `/admin` inteiro
-
-## Feito (P1 — completo)
-
-- Docker: imagem standalone + compose com Postgres (`docs/docker.md`) e driver `pg`
-- DX do clone: `pnpm bootstrap`, seed com admin demo, `.vscode`, `engine-strict` e guias (`docs/getting-started.md`)
-- Logger: `lib/logger.ts`, `instrumentation.ts` (`onRequestError`) e logger do Better Auth (`docs/logging.md`)
-
-## P0 — pendente
-
-- testes de integração
-
-## P2
-
-- observability: provedor real (como Sentry) em `instrumentation.ts` e `captureError`
-
-## T3 — não bloqueia, quando fizer sentido
-
-- CSP com nonce (opcional — hoje é estática, ver [decisions.md](decisions.md))
-- `.github/` templates de issue/PR + Dependabot
-
-## Features (backlog)
-
-- onboarding
-- billing / Stripe
-- organization system
-- notifications
-- email queue
-- upload de arquivos
-- i18n (`next-intl`)
+- Observabilidade: provedor real em `instrumentation.ts` e `captureError`.
+- Implementação nativa do `PlaybackEngine` (Capacitor ou Media3), se a Web não
+  atender à reprodução em segundo plano.

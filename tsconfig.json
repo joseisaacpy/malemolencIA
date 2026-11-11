@@ -30,6 +30,5 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  // A variante `back` importa arquivos que só existem depois da poda.
-  "exclude": ["node_modules", "scripts/variants/back"]
+  "exclude": ["node_modules"]
 }
