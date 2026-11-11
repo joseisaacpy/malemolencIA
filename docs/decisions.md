@@ -1,0 +1,219 @@
+# Decisões
+
+Registro curto das decisões de arquitetura (formato ADR leve). Cada uma tem
+**Status**, **Contexto**, **Decisão**, **Alternativas** e **Consequências**.
+Quando as alternativas não foram registradas na época, está escrito.
+
+Para mudar algo daqui, atualize a decisão (ou crie uma nova e marque a antiga
+como "Substituída") — não apague o histórico.
+
+---
+
+## 1. Better Auth para autenticação
+
+- **Status:** aceita
+- **Contexto:** o template precisa de login por e-mail/senha e social, com
+  App Router e Prisma.
+- **Decisão:** Better Auth, com o adapter Prisma (`lib/auth/auth.ts`).
+- **Alternativas:** não registradas.
+- **Consequências:** integração simples com o App Router e com o banco. A sessão
+  vive em cookie assinado com cache de 5 min (`cookieCache`); o plugin
+  `nextCookies()` precisa ser o **último** da lista de plugins.
+
+## 2. Prisma + PostgreSQL (Neon)
+
+- **Status:** aceita
+- **Contexto:** tipagem forte e produtividade; o deploy alvo é serverless.
+- **Decisão:** Prisma 7 com o adapter Neon (`@prisma/adapter-neon`) e cliente
+  único em `lib/db/prisma.ts`. Migrações usam `DIRECT_URL` quando existe
+  (`prisma.config.ts`).
+- **Alternativas:** não registradas.
+- **Consequências:** o client é gerado em `lib/generated/prisma` (ignorado pelo
+  git, recriado no `postinstall`).
+
+## 3. Tailwind + shadcn/ui
+
+- **Status:** aceita
+- **Contexto:** velocidade e consistência visual.
+- **Decisão:** Tailwind CSS 4 e componentes shadcn/ui em `components/ui`.
+- **Alternativas:** não registradas.
+- **Consequências:** os primitivos são código do projeto (podem ser editados);
+  novos componentes entram com `pnpm dlx shadcn@latest add <componente>`.
+
+## 4. Camadas por feature e autorização por dono (404, não 403)
+
+- **Status:** aceita
+- **Contexto:** o template precisa de um padrão que um júnior consiga copiar sem
+  abrir brecha de acesso a dados de outro usuário.
+- **Decisão:** `component → action → service → repository → Prisma`. Só o
+  repository toca o Prisma. Toda busca por id passa o `userId`; recurso de outro
+  usuário responde `NotFoundError` (404), não 403, para não revelar que existe.
+- **Alternativas:** responder 403 (descartada: confirma que o recurso existe).
+- **Consequências:** mais arquivos por feature. Quando a fonte de dados é o
+  Better Auth (`features/admin`), o service chama `auth.api` e não há repository.
+
+## 5. Server actions devolvem `ActionResult`
+
+- **Status:** aceita
+- **Contexto:** no React 19, erro de validação é um valor de retorno consumido
+  por `useActionState`, não uma exceção.
+- **Decisão:** toda action retorna `{ ok: true, data }` ou
+  `{ ok: false, error, code?, fieldErrors? }` (`lib/actions/types.ts`).
+  `createAction()` monta o fluxo padrão; `throw` fica para o inesperado.
+- **Alternativas:** não registradas.
+- **Consequências:** o client ramifica por `code` (ex.: `FORBIDDEN`). Erros
+  desconhecidos são logados e viram mensagem genérica.
+
+## 6. `proxy.ts` otimista; validação real na page/action
+
+- **Status:** aceita
+- **Contexto:** o Proxy roda antes do cache e não serve para I/O lento; layouts
+  podem não re-renderizar em navegações parciais.
+- **Decisão:** `proxy.ts` só verifica a presença do cookie de sessão. A
+  validação de verdade acontece no DAL (`lib/auth/session.ts`), chamado por cada
+  page e action.
+- **Alternativas:** checar sessão ou papel no proxy (descartada: sem acesso
+  barato ao banco, divergiria do servidor).
+- **Consequências:** duas listas de prefixos privados — `PRIVATE_PREFIXES` no
+  proxy e `privatePathPrefixes()` em `nav.config.ts` — que precisam coincidir.
+
+## 7. Rate limit persistido em banco
+
+- **Status:** aceita
+- **Contexto:** memória não serve em serverless (cada invocação é um processo
+  novo).
+- **Decisão:** `rateLimit.storage = "database"`, 100 req/min, na tabela
+  `rateLimit`.
+- **Alternativas:** memória (descartada pelo motivo acima).
+- **Consequências:** o contador vive no banco, com custo de I/O por request.
+
+## 8. RBAC com o plugin `admin` do Better Auth
+
+- **Status:** aceita
+- **Contexto:** precisamos de áreas restritas sem reinventar ban e troca de
+  papel.
+- **Decisão:** plugin `admin()` com os papéis padrão `user` e `admin`. Checagem
+  por papel: `hasRole()`, `requireRole()` (page → 404) e
+  `createAction({ roles })` (action → `FORBIDDEN`). Primeiro admin via
+  `ADMIN_EMAILS`, aplicado na criação da conta.
+- **Alternativas:** `createAccessControl` com permissões por recurso (mais
+  flexível, mais conceitos); campo `role` próprio no Prisma (sem ban nem
+  `setRole` prontos).
+- **Consequências:** o papel pode ficar até 5 min defasado na sessão após uma
+  troca (`cookieCache`). Evoluir para permissões por recurso exige
+  `createAccessControl` no servidor e no `adminClient()`.
+
+## 9. CSP estática, sem nonce
+
+- **Status:** aceita
+- **Contexto:** o Next injeta scripts e estilos inline.
+- **Decisão:** CSP estática em `lib/security/headers.ts`, com `'unsafe-inline'`
+  em script/style e `'unsafe-eval'` só em dev (o React usa `eval` para stacks de
+  erro em desenvolvimento).
+- **Alternativas:** nonce por request via `proxy.ts` (mais forte, mas força
+  renderização dinâmica em todas as páginas).
+- **Consequências:** páginas continuam estáticas/cacheáveis. Já bloqueia
+  iframes, plugins, `<base>` e origens externas não listadas — nova origem
+  (analytics, imagens, fontes) exige editar `lib/security/headers.ts`.
+
+## 10. Vitest, testes unitários ao lado do código
+
+- **Status:** aceita
+- **Contexto:** feedback rápido para schemas, services e helpers.
+- **Decisão:** Vitest em ambiente `node`, arquivos `*.test.ts` colocalizados,
+  `server-only` trocado por stub.
+- **Alternativas:** não registradas.
+- **Consequências:** sem testes de componente nem e2e por enquanto; testes de
+  integração com banco estão no [roadmap](roadmap.md). Ver [testing.md](testing.md).
+
+## 11. E-mail com transporte `console` como fallback
+
+- **Status:** aceita
+- **Contexto:** o template deve rodar sem conta no Resend.
+- **Decisão:** `lib/email` com `sendEmail` + `EmailTransport`. Sem
+  `RESEND_API_KEY`, o e-mail é impresso no terminal; com a chave, vai pelo Resend.
+- **Alternativas:** não registradas.
+- **Consequências:** verificação de e-mail e reset de senha funcionam em dev
+  copiando o link do terminal. Esse transporte usa `console` (texto legível), não
+  o `logger` (ver decisão 14).
+
+## 12. Dois drivers de banco, escolhidos por `DATABASE_DRIVER`
+
+- **Status:** aceita
+- **Contexto:** o adapter do Neon fala com o banco por WebSocket e não conecta
+  num Postgres comum, então o template só rodava com conta no Neon.
+- **Decisão:** `lib/db/adapter.ts` cria `PrismaNeon` ou `PrismaPg` conforme
+  `DATABASE_DRIVER` (`neon` por padrão). O compose usa `pg`.
+- **Alternativas:** detectar o driver pelo host da URL (descartada: mágica que
+  confunde); usar só `adapter-pg` (descartada: muda o comportamento em produção
+  de quem já usa o Neon em serverless).
+- **Consequências:** uma env nova e uma dependência a mais. O `prisma/seed.ts`
+  e o app usam a mesma função.
+
+## 13. Imagem standalone com migração em serviço separado
+
+- **Status:** aceita
+- **Contexto:** a imagem de produção deve ser enxuta, e `prisma migrate deploy`
+  precisa do CLI do Prisma, que é dependência de desenvolvimento.
+- **Decisão:** `Dockerfile` multi-stage. O _target_ `migrate` (com todas as
+  dependências) aplica as migrações e sai; o _target_ `runner` só leva o
+  `.next/standalone`. `output: "standalone"` só liga com `NEXT_OUTPUT=standalone`,
+  para não afetar o deploy na Vercel.
+- **Alternativas:** rodar a migração no entrypoint do app (descartada: leva o
+  CLI e dependências de dev na imagem final, e cada réplica tentaria migrar).
+- **Consequências:** `NEXT_PUBLIC_BASE_URL` é embutida no build (mudar a URL
+  exige reconstruir a imagem). A CSP só inclui `upgrade-insecure-requests` quando
+  essa URL é https, porque em `http://localhost` a diretiva quebra o Safari.
+
+## 14. Logger próprio, sem dependência
+
+- **Status:** aceita
+- **Contexto:** o template só tinha `console.*` espalhado, e erros de servidor
+  fora das server actions não eram registrados em lugar nenhum.
+- **Decisão:** `lib/logger.ts` (~180 linhas com comentários, `server-only`): JSON em produção,
+  linha colorida em dev (`util.styleText`, Node 24), nível por `LOG_LEVEL`,
+  `child()` e redaction de chaves sensíveis. `instrumentation.ts` registra os
+  erros de servidor e o logger do Better Auth passa pelo mesmo logger.
+- **Alternativas:** `pino` (padrão de mercado, mas traz dependência e, para saída
+  legível em dev, um transport em worker thread, que é a parte que costuma dar
+  problema com bundlers).
+- **Consequências:** um arquivo a manter, mas cabe numa leitura e não depende de
+  nada. Quem precisar de recursos avançados (rotação, transports) pode trocar
+  pelo `pino` mantendo a mesma API `logger.info/error`. O `captureError` roda no
+  navegador e continua em `console`; `prisma/seed.ts` também.
+
+## 15. Bootstrap sem dependências e seed de demonstração com guardas
+
+- **Status:** aceita
+- **Contexto:** do clone ao primeiro login eram ~7 passos manuais; o seed estava
+  quebrado e o cadastro exige verificar e-mail, que só aparece no terminal.
+- **Decisão:** `pnpm bootstrap` (`scripts/setup.ts`, só `node:*`) cria o `.env`,
+  gera o `BETTER_AUTH_SECRET`, sobe o Postgres do compose e migra, preenchendo só
+  o que está em branco. O seed (`tsx`) cria um admin demo com e-mail já verificado
+  e notas, usando o hash do próprio better-auth.
+- **Alternativas:** só documentar os passos (descartada: o clone continua com 5
+  passos manuais); semear pela API do better-auth (descartada: o `auth.ts`
+  importa `@/`, `server-only` e `env.ts`, que não funcionam fora do Next).
+- **Consequências:** o seed cria uma credencial **conhecida**, então recusa
+  `NODE_ENV=production` e banco não local sem `SEED_ALLOW_REMOTE=1`. O segredo
+  passou a exigir 32+ caracteres e o `.npmrc` liga `engine-strict`.
+
+## 16. Poda do template por tipo de projeto (full / front / back)
+
+- **Status:** aceita
+- **Contexto:** o template traz interface, auth, banco, e-mail e Docker, mas
+  muitos projetos são só front (sem banco) ou só API (sem telas). Apagar à mão
+  é lento e deixa dependências e arquivos órfãos.
+- **Decisão:** `pnpm bootstrap` chama `scripts/prune.ts` (só `node:*`), que
+  apaga os caminhos do modo escolhido, tira de `package.json` as deps e scripts
+  que sobram, copia por cima os arquivos de `scripts/variants/<modo>/` e roda
+  `pnpm install`, `typecheck`, `lint` e `test`. No modo `back`, as server
+  actions viram route handlers (`createRoute`) reaproveitando services e schemas.
+- **Alternativas:** repositórios/branches separados por tipo (descartada: três
+  bases para manter em sincronia); editar arquivos mistos por regex (descartada:
+  quebra em silêncio, por isso `nav.config.ts`, `Header.tsx` e a home têm
+  overlays prontos).
+- **Consequências:** só roda com a árvore git limpa e ao menos um commit, para
+  `git restore . && git clean -fd` desfazer. Os overlays do `back` ficam fora do
+  `tsconfig` e do Vitest do template completo, porque importam arquivos que só
+  existem depois da poda; os overlays do `front` compilam em ambos.
